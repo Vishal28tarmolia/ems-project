@@ -7,7 +7,7 @@ import { AuthContext } from './context/AuthProvider'
 const App = () => {
   const [user, setUser] = useState(null)
   const [loggedInUserData, setLoggedInUserData] = useState(null)
-  const [userData, setUserData] = useContext(AuthContext)
+  const [userData] = useContext(AuthContext)
 
   useEffect(() => {
     const loggedInUser = localStorage.getItem('loggedInUser')
@@ -15,7 +15,7 @@ const App = () => {
     if (loggedInUser) {
       const userData = JSON.parse(loggedInUser)
       setUser(userData.role)
-      setLoggedInUserData(userData.data)
+      setLoggedInUserData(userData.data || null)
     }
   }, [])
 
@@ -23,17 +23,7 @@ const App = () => {
     if (email === 'admin@me.com' && password === '123') {
       setUser('admin')
       localStorage.setItem('loggedInUser', JSON.stringify({ role: 'admin' }))
-    } 
-    // ✅ Guest login option
-    else if (email === 'guest@ems.com' && password === 'guest123') {
-      setUser('guest')
-      setLoggedInUserData({ name: 'Guest User', email: 'guest@ems.com' })
-      localStorage.setItem(
-        'loggedInUser',
-        JSON.stringify({ role: 'guest', data: { name: 'Guest User', email: 'guest@ems.com' } })
-      )
-    } 
-    else if (userData) {
+    } else if (userData) {
       const employee = userData.find(
         (e) => email === e.email && e.password === password
       )
@@ -47,22 +37,25 @@ const App = () => {
       } else {
         alert('Invalid Credentials')
       }
-    } else {
-      alert('Invalid Credentials')
     }
+  }
+
+  const handleGuestLogin = () => {
+    setUser('guest')
+    localStorage.setItem('loggedInUser', JSON.stringify({ role: 'guest' }))
   }
 
   return (
     <>
-      {!user ? <Login handleLogin={handleLogin} /> : null}
-
-      {user === 'admin' ? (
-        <AdminDashboard changeUser={setUser} />
-      ) : user === 'employee' ? (
-        <EmployeeDashboard changeUser={setUser} data={loggedInUserData} />
-      ) : user === 'guest' ? (
-        <EmployeeDashboard changeUser={setUser} data={loggedInUserData} />
+      {!user ? (
+        <Login handleLogin={handleLogin} handleGuestLogin={handleGuestLogin} />
       ) : null}
+
+      {user === 'admin' && <AdminDashboard changeUser={setUser} />}
+      {user === 'employee' && (
+        <EmployeeDashboard changeUser={setUser} data={loggedInUserData} />
+      )}
+      {user === 'guest' && <EmployeeDashboard changeUser={setUser} data={null} />}
     </>
   )
 }
